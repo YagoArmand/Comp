@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="simples-compiler">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/SIMPLES/build/jar/simples-compiler.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

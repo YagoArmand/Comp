@@ -192,12 +192,21 @@ parser code {:
     public void emit_for(String id, String n1, String n2, String n3){
 
       format_code(pos); 
-      TabelaSimbolo t1 = dicionario.get(id);  
+      TabelaSimbolo t1 = dicionario.get(id);
+
       if(t1 == null) {
          report_fatal_error("Variável não declarada [" + id + "]",null);
-      }    
+      }
 
-         System.out.print("for("+ id +" = "+ n1 +";"+ id +" < "+ n2 +";"+ id+ " += "+ n3 +")");
+      int passo = Integer.parseInt(n3);
+
+      if (passo >= 0 ){
+        System.out.print("for("+ id +" = "+ n1 +";"+ id +" < "+ n2 +";"+ id+ " += "+ n3 +")");
+      } else {
+        System.out.print("for("+ id +" = "+ n1 +";"+ id +" > "+ n2 +";"+ id+ " += "+ n3 +")");
+      }   
+
+         
       
     }
 
@@ -307,8 +316,8 @@ tipo ::=      DECLINT:t   {: RESULT = "INT"  ;     :}
 
 declare_variable ::=  tipo:t  ID:id 
                       ATTRIB
-                      expr:value   {: emit_declaracao_variavel_com_atribuicao(id,  t,  value); :}
-                      SEMI         {: emit_semi(); :}
+                      expr:value    {: emit_declaracao_variavel_com_atribuicao(id,  t,  value); :}
+                      SEMI          {: emit_semi(); :}
                     
                      | tipo:t ID:id {: emit_declaracao_variavel(id,t);  :} 
                        SEMI         {:  emit_semi(); :}
@@ -318,7 +327,7 @@ declare_variable ::=  tipo:t  ID:id
 assign		::=   ID:id 
                   ATTRIB 
                   expr:value        {: emit_atribuicao(id,value); :} 
-                  SEMI              {: emit_semi(); :}                             
+                  SEMI              {: emit_semi();               :}                             
                  ;                                   
 
                                                                                     
@@ -333,15 +342,15 @@ writel      ::= WRITELINE
 
 readl      ::= READLINE 
                expr:id       {: emit_leia(id); :}
-               SEMI          {: emit_semi();:}
+               SEMI          {: emit_semi();   :}
             ;
 
 if          ::= IFF 
-                expr:value    {: emit_if(value);   :}
+                expr:value    {: emit_if(value);     :}
                 THENN         {: emit_startblock();  :}
                 list_command
                 elsepart  
-                ENDELSE       {: emit_endblock();       :}
+                ENDELSE       {: emit_endblock();    :}
                 ;
 
 elsepart      ::=  ELSEE      {: emit_endblock(); emit_else(); emit_startblock(); :}
@@ -349,7 +358,7 @@ elsepart      ::=  ELSEE      {: emit_endblock(); emit_else(); emit_startblock()
                    | /* empty */
                    ;
 
-for         ::= PARA ID:id DE INTT:n1 ATE INTT:n2 PASSO INTT:n3 FACA {: emit_for(id,n1,n2,n3); emit_startblock();  :}
+for         ::= PARA ID:id DE expr:n1 ATE expr:n2 PASSO expr:n3 FACA {: emit_for(id,n1,n2,n3); emit_startblock();  :}
                 list_command
                 FIMPARA {:  emit_endblock(); :}
             ;
@@ -363,15 +372,16 @@ while       ::= ENQUANTO expr:value {: emit_while(value); :}
                                                       
 
 expr     ::= expr:e1 PLUS expr:e2         {: RESULT =  e1 + "+" + e2;  dicionario.put(RESULT,new TabelaSimbolo(checkExpr(e1,e2),false));  :}
-	       | expr:e1 MINUS expr:e2        {: RESULT =  e1 + "-" + e2;  dicionario.put(RESULT,new TabelaSimbolo(checkExpr(e1,e2),false)); :}
+	         | expr:e1 MINUS expr:e2        {: RESULT =  e1 + "-" + e2;  dicionario.put(RESULT,new TabelaSimbolo(checkExpr(e1,e2),false)); :}
            | expr:e1 TIMES expr:e2        {: RESULT =  e1 + "*" + e2;  dicionario.put(RESULT,new TabelaSimbolo(checkExpr(e1,e2),false));  :}  
-	       | expr:e1 DIVIDE expr:e2       {: RESULT =  e1 + "/" + e2;  dicionario.put(RESULT,new TabelaSimbolo(checkExpr(e1,e2),false));  :}  
+	         | expr:e1 DIVIDE expr:e2       {: RESULT =  e1 + "/" + e2;  dicionario.put(RESULT,new TabelaSimbolo(checkExpr(e1,e2),false));  :}  
            | expr:e1 EQUALS expr:e2       {: RESULT =  e1 + "==" + e2; dicionario.put(RESULT,new TabelaSimbolo(checkExpr(e1,e2),false));  :}
            | expr:e1 GREATER expr:e2      {: RESULT =  e1 + ">" + e2;  dicionario.put(RESULT,new TabelaSimbolo(checkExpr(e1,e2),false)); :}
            | expr:e1 LESS expr:e2         {: RESULT =  e1 + "<" + e2;  dicionario.put(RESULT,new TabelaSimbolo(checkExpr(e1,e2),false)); :}
            | expr:e1 E expr:e2            {: RESULT =  e1 + "&&" + e2; dicionario.put(RESULT,new TabelaSimbolo(checkExpr(e1,e2),false)); :}
            | expr:e1 OU expr:e2           {: RESULT =  e1 + "||" + e2; dicionario.put(RESULT,new TabelaSimbolo(checkExpr(e1,e2),false)); :}
-           | NAO expr:e1                 {: RESULT =   "!" + e1;    ;                    :}
+           | NAO expr:e1                  {: RESULT =   "!" + e1;    ;                    :}
+           | MINUS expr:e1                {: RESULT =   "-" + e1;    ;                    :}
            | LPAREN  
              expr:e1                      {: RESULT =  "(" + e1  + ")"; dicionario.put(RESULT,new TabelaSimbolo(checkExpr(e1,null),false));:} 
              RPAREN   

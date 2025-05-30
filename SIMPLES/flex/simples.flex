@@ -29,7 +29,8 @@ LineTerminator = \r|\n|\r\n
 WhiteSpace     = {LineTerminator} | [ \t\f]
 integer   =   {digit}+
 float = {integer}\.{integer}
-identifier = [A-Za-z_][A-Za-z_0-9]*     
+identifier = [A-Za-z_][A-Za-z_0-9]*
+texto = \"([^\"\\]|\\.)*\"     
 
 commentinicio   = \/\*
 commentfim      = \*\/
@@ -80,8 +81,9 @@ comment =  {commentinicio}{commentbody}{commentfim} | \/\/[a-zA-Z0-9 \t]*
     "e"                {  return symbol(sym.E);        }
     "ou"               {  return symbol(sym.OU);       }
  
-    {integer}      { return symbol(sym.INTT,yytext()); }
-    {float}    { return symbol(sym.FLOATT, yytext()); }
+    {integer}          { return symbol(sym.INTT,yytext());    }
+    {float}            { return symbol(sym.FLOATT, yytext()); }
+    {texto}            { return symbol(sym.TEXTO, yytext());  }
     {identifier}       { return symbol(sym.ID, yytext());} 
     {WhiteSpace}       { /* just skip what was found, do nothing */ }   
     {comment}          { /* just skip what was found, do nothing */ }   

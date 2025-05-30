@@ -151,6 +151,13 @@ parser code {:
          }   
       }
 
+    public void emit_texto(String t){
+        format_code(pos);
+
+        System.out.print("printf(\"%s\"," + t + ")") ;
+
+      }
+
     public void emit_leia(String id){
 
        format_code(pos);   
@@ -255,6 +262,7 @@ terminal            IFF, SEMI, THENN,  ELSEE, ENDELSE, ATTRIB, PARA, DE, ATE, PA
 terminal String	    ID;
 terminal String     INTT;      
 terminal String     FLOATT;
+terminal String     TEXTO;
 
 /* Non terminals */
 non terminal             program, list_command, command, assign , declare_variable, writel, readl,if,elsepart,for,while;
@@ -316,6 +324,10 @@ assign		::=   ID:id
                                                                                     
 writel      ::= WRITELINE
                 expr:value {: emit_escreva(value);  :}                                                   
+                SEMI       {: emit_semi();          :}
+                |
+                WRITELINE
+                TEXTO:t    {: emit_texto(t);        :}
                 SEMI       {: emit_semi();          :}
             ;
 

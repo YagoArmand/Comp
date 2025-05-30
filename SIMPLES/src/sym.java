@@ -43,6 +43,7 @@ public class sym {
   public static final int RBRCKT = 9;
   public static final int DECLINT = 18;
   public static final int PARA = 29;
+  public static final int TEXTO = 40;
   public static final int FLOATT = 39;
   public static final int NAO = 22;
   public static final int IFF = 23;
@@ -86,7 +87,8 @@ public class sym {
   "FIMENQUANTO",
   "ID",
   "INTT",
-  "FLOATT"
+  "FLOATT",
+  "TEXTO"
   };
 }
 

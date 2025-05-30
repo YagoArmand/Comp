@@ -8,6 +8,7 @@ inicio
    inteiro f;
    inteiro i;
    flutuante d;
+   int teste [10];
 
    leia a;
    leia c;

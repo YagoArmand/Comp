@@ -35,11 +35,18 @@ parser code {:
 
        private String tipo;
        private boolean EhVetor;
+       private String tamanho;
       
      
       TabelaSimbolo(String tipo,boolean EhVetor){
           this.tipo = tipo;  
           this.EhVetor = EhVetor;
+      }
+
+      TabelaSimbolo(String tipo,boolean EhVetor, String tamanho){
+          this.tipo = tipo;  
+          this.EhVetor = EhVetor;
+          this.tamanho = tamanho;
       }
 
        public String getTipo(){
@@ -49,11 +56,18 @@ parser code {:
        public boolean getEhVetor() {
           return EhVetor;
        }
+
+       public String getTamanho() {
+          return tamanho;
+       }
   }
 
   
   private Hashtable<String,TabelaSimbolo> dicionario = new Hashtable<String,TabelaSimbolo>();
   private int pos = 0;
+  Deque<String> pilhaAuxiliar = new ArrayDeque<String>();
+  ArrayList<String> vetorAuxiliar = new ArrayList<>();
+
 
   /* emitir código C */
 
@@ -219,6 +233,18 @@ parser code {:
        System.out.print("while("+value+")");
     }
 
+   public void emit_declaracao_vetor(String tipo, String id, String tam){
+        format_code(pos);
+
+        if(tipo.equals("INT")){
+          System.out.print("int " + id + "[" + tam + "]");
+        } else {
+          System.out.print("float " + id + "[" + tam + "]");
+        }
+
+        dicionario.put(id, new TabelaSimbolo(tipo, true, tam));
+   }
+
     /* métodos auxiliares */
     public String checkExpr(String e1, String e2){   
         String tipoE1 = "", tipoE2 = "";                                                      
@@ -258,6 +284,28 @@ parser code {:
        for(int i=0; i < pos * 3; i++){
           System.out.print(" ");  
        }
+    }
+
+    public void checarUsoCorretoVetores(String id) {
+      String idaux = id;
+
+      if (id.contains("[")){ id = id.substring(0, id.indexOf('[')); }
+              if (! dicionario.containsKey(id)){
+                  report_fatal_error("Variavel não declarada [" + id + "]", null);
+              }
+
+      TabelaSimbolo t1 = dicionario.get(id);
+
+      /*dicionario.forEach((k, v) -> {
+        System.out.format("key: %s, value: %s%n", k, v.getEhVetor());
+      });*/
+
+      if (t1 != null) {
+        if (t1.getEhVetor() == true && (!idaux.contains("["))) {
+          report_fatal_error("Usando vetor sem indice [" + id + "]", null);          
+        }
+      }
+
     }
 
 :};
@@ -317,17 +365,25 @@ tipo ::=      DECLINT:t   {: RESULT = "INT"  ;     :}
 declare_variable ::=  tipo:t  ID:id 
                       ATTRIB
                       expr:value    {: emit_declaracao_variavel_com_atribuicao(id,  t,  value); :}
+                      SEMI          {: emit_semi(); :}                    
+                     | 
+                      tipo:t ID:id  {: emit_declaracao_variavel(id,t);  :} 
                       SEMI          {: emit_semi(); :}
-                    
-                     | tipo:t ID:id {: emit_declaracao_variavel(id,t);  :} 
-                       SEMI         {:  emit_semi(); :}
+                     | 
+                      tipo:t vetor  {: emit_declaracao_vetor(t, vetorAuxiliar.remove(0), vetorAuxiliar.remove(0)); :}
+                      SEMI          {: emit_semi(); :}
                      ;
 
 
 assign		::=   ID:id 
                   ATTRIB 
                   expr:value        {: emit_atribuicao(id,value); :} 
-                  SEMI              {: emit_semi();               :}                             
+                  SEMI              {: emit_semi();               :}
+                  | 
+                  vetor
+                  ATTRIB
+                  expr:e
+                  SEMI                             
                  ;                                   
 
                                                                                     
@@ -367,6 +423,10 @@ while       ::= ENQUANTO expr:value {: emit_while(value); :}
                 FACA                {: emit_startblock();  :}
                 list_command
                 FIMENQUANTO         {:  emit_endblock(); :}
+            ;
+
+vetor       ::= ID:i LBRCKT INTT:z RBRCKT  {: RESULT = i + "["+z+"]"; pilhaAuxiliar.push(z);pilhaAuxiliar.push(i); :}
+                |ID:i LBRCKT expr:z RBRCKT {: RESULT = i + "["+z+"]"; pilhaAuxiliar.push(z);pilhaAuxiliar.push(i); :}
             ;                                                       
                                                                                          
                                                       
@@ -388,4 +448,5 @@ expr     ::= expr:e1 PLUS expr:e2         {: RESULT =  e1 + "+" + e2;  dicionari
            | ID:i                         {: RESULT = i;  /* detectar variavel nao declarada */ checkExpr(i,null);             :}
            | INTT: n                      {: RESULT = n;  dicionario.put(RESULT,new TabelaSimbolo("INT",false));               :}
            | FLOATT:n                     {: RESULT = n;  dicionario.put(RESULT,new TabelaSimbolo("FLOAT",false));             :}
+           | vetor:v                      {: RESULT = v;  dicionario.put(RESULT, new TabelaSimbolo(checkExpr(v,null), true));  :}
            ;

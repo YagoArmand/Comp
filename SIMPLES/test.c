@@ -19,6 +19,7 @@ int main(){
    printf("\n%d",f);
    printf("\n%d",c);
    printf("\n%f",d);
+   printf("%s\n","testando");
    printf("%s","helloworld");
    if(b>f){   
       printf("\n%d",b);

@@ -158,6 +158,13 @@ parser code {:
 
       }
 
+    public void emit_escreval(String t){
+        format_code(pos);
+
+        System.out.print("printf(\"%s\\n\"," + t + ")") ;
+
+      }
+
     public void emit_leia(String id){
 
        format_code(pos);   
@@ -272,6 +279,7 @@ terminal String	    ID;
 terminal String     INTT;      
 terminal String     FLOATT;
 terminal String     TEXTO;
+terminal String     ESCREVAL;
 
 /* Non terminals */
 non terminal             program, list_command, command, assign , declare_variable, writel, readl,if,elsepart,for,while;
@@ -305,7 +313,7 @@ command ::=    declare_variable
             |  writel
             |  if
             |  for
-            |  while            
+            |  while           
             ;
           
 
@@ -337,6 +345,10 @@ writel      ::= WRITELINE
                 |
                 WRITELINE
                 TEXTO:t    {: emit_texto(t);        :}
+                SEMI       {: emit_semi();          :}
+                |
+                ESCREVAL
+                TEXTO:t    {: emit_escreval(t);     :}
                 SEMI       {: emit_semi();          :}
             ;
 

@@ -22,7 +22,8 @@ inicio
    escreva f;
    escreva c;
    escreva d;
-   escreva "helloworld";
+   escreval "testando";
+   escreva  "helloworld";
 
    se b > f entao
       escreva b;

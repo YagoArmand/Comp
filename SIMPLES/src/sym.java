@@ -11,6 +11,7 @@ public class sym {
   public static final int READLINE = 16;
   public static final int FIMENQUANTO = 36;
   public static final int DE = 30;
+  public static final int ESCREVAL = 41;
   public static final int EQUALS = 10;
   public static final int LPAREN = 6;
   public static final int GREATER = 11;
@@ -88,7 +89,8 @@ public class sym {
   "ID",
   "INTT",
   "FLOATT",
-  "TEXTO"
+  "TEXTO",
+  "ESCREVAL"
   };
 }
 

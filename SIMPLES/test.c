@@ -21,6 +21,7 @@ int main(){
    printf("\n%f",d);
    printf("%s\n","testando");
    printf("%s","helloworld");
+   printf("%d\n",a+b);
    if(b>f){   
       printf("\n%d",b);
    }

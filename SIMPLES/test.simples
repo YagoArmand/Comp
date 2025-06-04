@@ -24,6 +24,7 @@ inicio
    escreva d;
    escreval "testando";
    escreva  "helloworld";
+   escreval a + b;
 
    se b > f entao
       escreva b;

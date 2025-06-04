@@ -165,6 +165,24 @@ parser code {:
 
       }
 
+    public void emit_escreval_expressao(String id){
+
+        format_code(pos);  
+
+     TabelaSimbolo t1 = dicionario.get(id);  
+      if(t1 == null) {
+         report_fatal_error("Variável não declarada [" + id + "]",null);
+      }  
+
+      String tipo = t1.getTipo();
+
+         if(tipo.equals("INT")) {
+           System.out.print("printf(\"%d\\n\"," + id + ")") ;
+         } else {
+            System.out.print("printf(\"%f\\n\"," + id + ")") ;
+         }   
+      }  
+
     public void emit_leia(String id){
 
        format_code(pos);   
@@ -282,8 +300,8 @@ terminal String     TEXTO;
 terminal String     ESCREVAL;
 
 /* Non terminals */
-non terminal             program, list_command, command, assign , declare_variable, writel, readl,if,elsepart,for,while;
-non terminal  String    expr,tipo,vetor;      
+non terminal             program, list_command, command, assign , declare_variable, writel, writell, readl,if,elsepart,for,while;
+non terminal  String     expr,tipo,vetor;      
 
 /* Precedences */
 precedence left EQUALS;
@@ -311,6 +329,7 @@ command ::=    declare_variable
             |  assign
             |  readl
             |  writel
+            |  writell
             |  if
             |  for
             |  while           
@@ -346,10 +365,15 @@ writel      ::= WRITELINE
                 WRITELINE
                 TEXTO:t    {: emit_texto(t);        :}
                 SEMI       {: emit_semi();          :}
-                |
-                ESCREVAL
+            ;
+
+writell    ::=  ESCREVAL
                 TEXTO:t    {: emit_escreval(t);     :}
                 SEMI       {: emit_semi();          :}
+                |
+                ESCREVAL
+                expr:value {: emit_escreval_expressao(value); :}                                                   
+                SEMI       {: emit_semi();                    :}
             ;
 
 readl      ::= READLINE 

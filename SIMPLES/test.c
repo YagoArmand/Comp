@@ -8,7 +8,11 @@ int main(){
    int f;
    int i;
    float d;
-   int teste[10];
+   int teste[10+5];
+   teste[0] = 5;
+   for(i = 1;i < 15;i += 2){   
+      scanf("%d",&teste[i]);
+   }
    scanf("%d",&a);
    scanf("%d",&c);
    scanf("%d",&f);

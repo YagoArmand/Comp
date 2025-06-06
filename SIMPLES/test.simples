@@ -8,7 +8,14 @@ inicio
    inteiro f;
    inteiro i;
    flutuante d;
-   inteiro teste[10];
+
+   inteiro teste[10+5];
+
+   teste[0] <- 5;
+
+   para i de 1 ate 15 passo 2 faca
+      leia teste[i];
+   fimpara 
 
    leia a;
    leia c;

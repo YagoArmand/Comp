@@ -34,12 +34,19 @@ parser code {:
     class TabelaSimbolo {
 
        private String tipo;
+       private String tam;
        private boolean EhVetor;
       
      
       TabelaSimbolo(String tipo,boolean EhVetor){
           this.tipo = tipo;  
           this.EhVetor = EhVetor;
+      }
+
+      TabelaSimbolo(String tipo,boolean EhVetor, String tam){
+          this.tipo = tipo;  
+          this.EhVetor = EhVetor;
+          this.tam = tam;
       }
 
        public String getTipo(){
@@ -49,11 +56,17 @@ parser code {:
        public boolean getEhVetor() {
           return EhVetor;
        }
+
+       public String getTam() {
+          return tam;
+       }
   }
 
   
   private Hashtable<String,TabelaSimbolo> dicionario = new Hashtable<String,TabelaSimbolo>();
   private int pos = 0;
+  Stack<String> pilhaAuxiliar = new Stack<String>();
+  String v1,v2;
 
   /* emitir código C */
 
@@ -229,10 +242,37 @@ parser code {:
         System.out.print("for("+ id +" = "+ n1 +";"+ id +" < "+ n2 +";"+ id+ " += "+ n3 +")");
       } else {
         System.out.print("for("+ id +" = "+ n1 +";"+ id +" > "+ n2 +";"+ id+ " += "+ n3 +")");
-      }   
-
-         
+      }  
       
+    }
+
+    public void emit_atribuicao_vetor(String id, String tam, String expressao) {
+      format_code(pos);
+      checarVariavelNaoDeclarada(id);
+      System.out.print(id + "[" + tam + "]" + " = " + expressao);
+    }
+
+    public void checarVariavelNaoDeclarada (String id) { 
+      if(id.contains("[")){ id = id.substring(0,id.indexOf('[')); }
+                 if(! dicionario.containsKey(id)){
+                    report_fatal_error("Variável não declarada [" + id + "]",null);
+                 }
+    }
+
+    public void emit_declaracao_vetor(String tipo, String id, String tam) {
+      format_code(pos);
+
+      if(dicionario.containsKey(id)){
+        report_fatal_error("Variável duplicada [" + id + "]", null);
+      }
+
+      if(tipo.equals("INT")){
+        System.out.print("int " + id + "[" + tam + "]");
+      } else {
+        System.out.print("float " + id + "[" + tam + "]");
+      }
+
+      dicionario.put(id, new TabelaSimbolo(tipo, true, tam));
     }
 
    public void emit_while(String value){
@@ -245,26 +285,34 @@ parser code {:
     }
 
     /* métodos auxiliares */
-    public String checkExpr(String e1, String e2){   
-        String tipoE1 = "", tipoE2 = "";                                                      
+     public String checkExpr(String e1, String e2){  
+        String tipoE1 = "", tipoE2 = "";  
+        String e1aux, e2aux;
+        e1aux = e1; e2aux = e2;
+     
 
         if(e1 != null){
-            TabelaSimbolo t1 = dicionario.get(e1);  
 
-             if(t1 == null) {
-                 report_fatal_error("Variável não declarada [" + e1 + "]",null);
-                }
+          if(e1.contains("[")){ e1 = e1.substring(0,e1.indexOf('[')); }
 
-            tipoE1 = t1.getTipo();    
-        
+          checarVariavelNaoDeclarada(e1);
+          checarUsoCorretoVetores(e1aux);
+
+           TabelaSimbolo t1 = dicionario.get(e1);  
+           if(t1 != null)
+              tipoE1 = t1.getTipo();
 
             if(e2 != null){
-                TabelaSimbolo t2 = dicionario.get(e2);  
-                if(t2 == null) {
-                 report_fatal_error("Variável não declarada [" + e2 + "]",null);
-                }
+               if(e2.contains("[")){ e2 = e2.substring(0,e2.indexOf('[')); }
+               checarVariavelNaoDeclarada(e2);
+               checarUsoCorretoVetores(e2aux);
 
-                tipoE2 = t2.getTipo(); 
+               TabelaSimbolo t2 = dicionario.get(e2);  
+               if(t2 != null) {
+                  tipoE2 = t2.getTipo();
+               }
+
+             
             }
 
         }
@@ -272,11 +320,33 @@ parser code {:
         if(! tipoE2.equals("")){
 
             if(! tipoE1.equals(tipoE2)){
-                report_fatal_error("Linguagem não permite operações com tipos diferentes !",null);
+               report_fatal_error("Linguagem não permite operações com tipos diferentes !",null);
             }
         }
 
         return tipoE1;
+    }
+
+    public void checarUsoCorretoVetores(String id){
+      String idaux = id;
+ 
+      if(id.contains("[")){ id = id.substring(0,id.indexOf('[')); }
+                 if(! dicionario.containsKey(id)){
+                    report_fatal_error("Variável não declarada [" + id + "]",null);
+                 }
+
+      TabelaSimbolo t1 = dicionario.get(id);
+
+     /*   dicionario.forEach((k, v) -> {
+             System.out.format("key: %s, value: %s%n", k, v.getEhVetor());
+         }); */
+
+      if(t1 != null){
+        if(t1.getEhVetor() == true && (! idaux.contains("["))){
+             report_fatal_error("Usando vetor sem índice [" + id + "]",null);
+        }
+      }
+
     }
 
      public void format_code(int pos){
@@ -332,7 +402,8 @@ command ::=    declare_variable
             |  writell
             |  if
             |  for
-            |  while           
+            |  while
+            |  vetor           
             ;
           
 
@@ -344,17 +415,25 @@ tipo ::=      DECLINT:t   {: RESULT = "INT"  ;     :}
 declare_variable ::=  tipo:t  ID:id 
                       ATTRIB
                       expr:value    {: emit_declaracao_variavel_com_atribuicao(id,  t,  value); :}
-                      SEMI          {: emit_semi(); :}
-                    
-                     | tipo:t ID:id {: emit_declaracao_variavel(id,t);  :} 
+                      SEMI          {: emit_semi();  :}                    
+                     | 
+                       tipo:t ID:id {: emit_declaracao_variavel(id,t);  :} 
                        SEMI         {:  emit_semi(); :}
+                     |
+                       tipo:t vetor {: emit_declaracao_vetor(t, pilhaAuxiliar.pop(), pilhaAuxiliar.pop()); pilhaAuxiliar.clear(); :}
+                       SEMI         {: emit_semi();  :}
                      ;
 
 
 assign		::=   ID:id 
                   ATTRIB 
                   expr:value        {: emit_atribuicao(id,value); :} 
-                  SEMI              {: emit_semi();               :}                             
+                  SEMI              {: emit_semi(); :}
+                  |
+                  vetor             {: v1 = pilhaAuxiliar.pop(); v2 = pilhaAuxiliar.pop(); pilhaAuxiliar.clear(); :}
+                  ATTRIB
+                  expr:e            {: emit_atribuicao_vetor(v1, v2, e); pilhaAuxiliar.clear();  :}
+                  SEMI              {: emit_semi(); :}                              
                  ;                                   
 
                                                                                     
@@ -365,6 +444,10 @@ writel      ::= WRITELINE
                 WRITELINE
                 TEXTO:t    {: emit_texto(t);        :}
                 SEMI       {: emit_semi();          :}
+            ;
+
+vetor      ::= ID:i LBRCKT INTT:z RBRCKT            {: RESULT = i + "["+z+"]"; pilhaAuxiliar.push(z); pilhaAuxiliar.push(i); :}
+               | ID:i LBRCKT expr:z RBRCKT          {: RESULT = i + "["+z+"]"; pilhaAuxiliar.push(z); pilhaAuxiliar.push(i); :}
             ;
 
 writell    ::=  ESCREVAL
@@ -424,4 +507,5 @@ expr     ::= expr:e1 PLUS expr:e2         {: RESULT =  e1 + "+" + e2;  dicionari
            | ID:i                         {: RESULT = i;  /* detectar variavel nao declarada */ checkExpr(i,null);             :}
            | INTT: n                      {: RESULT = n;  dicionario.put(RESULT,new TabelaSimbolo("INT",false));               :}
            | FLOATT:n                     {: RESULT = n;  dicionario.put(RESULT,new TabelaSimbolo("FLOAT",false));             :}
+           | vetor: v                     {: RESULT = v;  dicionario.put(RESULT,new TabelaSimbolo(checkExpr(v, null), true));  :} 
            ;

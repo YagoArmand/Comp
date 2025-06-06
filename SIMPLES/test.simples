@@ -8,6 +8,7 @@ inicio
    inteiro f;
    inteiro i;
    flutuante d;
+   inteiro teste[10];
 
    leia a;
    leia c;
@@ -25,7 +26,6 @@ inicio
    escreval "testando";
    escreva  "helloworld";
    escreval a + b;
-   ctste[0] <- 1;
 
    se b > f entao
       escreva b;

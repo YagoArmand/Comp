@@ -8,6 +8,7 @@ int main(){
    int f;
    int i;
    float d;
+   int teste[10];
    scanf("%d",&a);
    scanf("%d",&c);
    scanf("%d",&f);

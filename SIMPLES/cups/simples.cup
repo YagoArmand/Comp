@@ -7,6 +7,7 @@ import java.util.Stack;
    
 parser code {:
       
+   public String scope;
     
     public void report_error(String message, Object info) {
         StringBuilder m = new StringBuilder("Error");
@@ -36,7 +37,7 @@ parser code {:
        private String tipo;
        private String tam;
        private boolean EhVetor;
-      
+       private String scope;
      
       TabelaSimbolo(String tipo,boolean EhVetor){
           this.tipo = tipo;  
@@ -49,6 +50,13 @@ parser code {:
           this.tam = tam;
       }
 
+      TabelaSimbolo(String tipo,boolean EhVetor, String tam, String scope){
+          this.tipo = tipo;  
+          this.EhVetor = EhVetor;
+          this.tam = tam;
+          this.scope = scope;
+      }
+
        public String getTipo(){
           return tipo;
        }
@@ -59,6 +67,10 @@ parser code {:
 
        public String getTam() {
           return tam;
+       }
+
+       public String getScope() {
+         return scope;
        }
   }
 
@@ -82,7 +94,6 @@ parser code {:
        System.out.print("\n");
 
     }
-
  
      public void emit_endblock(){
        format_code(--pos);
@@ -362,7 +373,7 @@ parser code {:
 /* ------------Declaration of Terminals and Non Terminals Section----------- */
 /* Terminals (tokens returned by the scanner). */
 terminal            PLUS, MINUS, TIMES, DIVIDE,  LPAREN, RPAREN, LBRCKT, RBRCKT, EQUALS, GREATER,LESS, PROGRAM, STARTPRG, ENDPRG, READLINE, WRITELINE,DECLINT,DECLFLOAT, E, OU, NAO;
-terminal            IFF, SEMI, THENN,  ELSEE, ENDELSE, ATTRIB, PARA, DE, ATE, PASSO, FACA, FIMPARA, ENQUANTO, FIMENQUANTO;
+terminal            IFF, SEMI, THENN,  ELSEE, ENDELSE, ATTRIB, PARA, DE, ATE, PASSO, FACA, FIMPARA, ENQUANTO, FIMENQUANTO, RETURN, COMMA, VOID, PROCEDIMENTO;
 terminal String	    ID;
 terminal String     INTT;      
 terminal String     FLOATT;
@@ -370,7 +381,7 @@ terminal String     TEXTO;
 terminal String     ESCREVAL;
 
 /* Non terminals */
-non terminal             program, list_command, command, assign , declare_variable, writel, writell, readl,if,elsepart,for,while;
+non terminal             program, list_command, command, assign , declare_variable, writel, writell, readl,if,elsepart,for,while, function;
 non terminal  String     expr,tipo,vetor;      
 
 /* Precedences */
@@ -385,10 +396,10 @@ precedence left E, OU, NAO;
 
 
 /* The grammar rules */
-program ::= PROGRAM        {: emit_program(); :} 
-            STARTPRG       {: emit_startblock();            :} 
+program ::= PROGRAM        {: emit_program();       :} 
+            STARTPRG       {: emit_startblock();    :} 
             list_command   
-            ENDPRG         {: emit_endblock() ;            :}
+            ENDPRG         {: emit_endblock() ;     :}
             ;
 
 list_command ::= list_command command 
@@ -403,13 +414,20 @@ command ::=    declare_variable
             |  if
             |  for
             |  while
-            |  vetor           
+            |  vetor
+            |  return_function_type
+            |  function           
             ;
           
 
 tipo ::=      DECLINT:t   {: RESULT = "INT"  ;     :}
             | DECLFLOAT:t {: RESULT = "FLOAT";     :}
             ;
+
+return_type ::=     DECLINT_INT      {: RESULT = "INT" ;  System.out.print("int");   :}
+                  | DECLFLOAT_FLOAT  {: RESULT = "FLOAT"; System.out.print("float"); :}
+                  | VOID             {: RESULT = "VOID";  System.out.print("void");  :}  
+                  ;
    
 
 declare_variable ::=  tipo:t  ID:id 
@@ -418,7 +436,7 @@ declare_variable ::=  tipo:t  ID:id
                       SEMI          {: emit_semi();  :}                    
                      | 
                        tipo:t ID:id {: emit_declaracao_variavel(id,t);  :} 
-                       SEMI         {:  emit_semi(); :}
+                       SEMI         {: emit_semi();  :}
                      |
                        tipo:t vetor {: emit_declaracao_vetor(t, pilhaAuxiliar.pop(), pilhaAuxiliar.pop()); pilhaAuxiliar.clear(); :}
                        SEMI         {: emit_semi();  :}
@@ -436,6 +454,20 @@ assign		::=   ID:id
                   SEMI              {: emit_semi(); :}                              
                  ;                                   
 
+return function ::= RETURN {: format_code(pos); System.out.print("return "); :}
+                    return_function_type 
+                    SEMI   {: System.out.print(";\n");     :}
+                    ;
+
+return_function_type ::= expr:e {: System.out.print(e); :}
+                         |
+                         VOID
+                         |
+                         ID:id
+                         LPAREN {: System.out.print(id + "{"); :}
+                         call_parameter_list
+                         LPAREN {: System.out.print("}"); :}
+                         ;
                                                                                     
 writel      ::= WRITELINE
                 expr:value {: emit_escreva(value);  :}                                                   
@@ -483,18 +515,44 @@ for         ::= PARA ID:id DE expr:n1 ATE expr:n2 PASSO expr:n3 FACA {: emit_for
             ;
 
 while       ::= ENQUANTO expr:value {: emit_while(value); :}
-                FACA                {: emit_startblock();  :}
+                FACA                {: emit_startblock(); :}
                 list_command
-                FIMENQUANTO         {:  emit_endblock(); :}
-            ;                                                       
-                                                                                         
-                                                      
+                FIMENQUANTO         {: emit_endblock();   :}
+            ;
 
-expr     ::= expr:e1 PLUS expr:e2         {: RESULT =  e1 + "+" + e2;  dicionario.put(RESULT,new TabelaSimbolo(checkExpr(e1,e2),false));  :}
-	         | expr:e1 MINUS expr:e2        {: RESULT =  e1 + "-" + e2;  dicionario.put(RESULT,new TabelaSimbolo(checkExpr(e1,e2),false)); :}
-           | expr:e1 TIMES expr:e2        {: RESULT =  e1 + "*" + e2;  dicionario.put(RESULT,new TabelaSimbolo(checkExpr(e1,e2),false));  :}  
-	         | expr:e1 DIVIDE expr:e2       {: RESULT =  e1 + "/" + e2;  dicionario.put(RESULT,new TabelaSimbolo(checkExpr(e1,e2),false));  :}  
-           | expr:e1 EQUALS expr:e2       {: RESULT =  e1 + "==" + e2; dicionario.put(RESULT,new TabelaSimbolo(checkExpr(e1,e2),false));  :}
+
+function    ::= PROCEDIMENTO 
+                return_type
+                ID:nome  {: SCOPE=nome; System.out.print(nome);       :}
+                LPAREN   {: System.out.print("("); :}
+                parameter_list
+                RPAREN   {: System.out.print(")"); :}
+                STARTPRG {: emit_startblock();     :}
+                list_command
+                ENDPRG   {: emit_endblock(); System.out.print("\n\n"); :}
+            ;
+
+parameter_list ::= parameter_list parameter
+                   | /* empty */
+                   ;
+
+parameter ::=     tipo:t 
+                  ID:id     {: emit_declaracao_variavel(id, t); :}
+                  COMMA     {: system.out.print(", ");          :}
+                  |
+                  tipo:t 
+                  ID:id     {: emit_declaracao_variavel(id, t); :}
+                  ;
+
+call_parameter_list ::= call_parameter_list call_parameter
+                  | /* empty */
+                  ;
+
+expr     ::= expr:e1 PLUS expr:e2         {: RESULT =  e1 + "+" + e2;  dicionario.put(RESULT,new TabelaSimbolo(checkExpr(e1,e2),false)); :}
+	        | expr:e1 MINUS expr:e2        {: RESULT =  e1 + "-" + e2;  dicionario.put(RESULT,new TabelaSimbolo(checkExpr(e1,e2),false)); :}
+           | expr:e1 TIMES expr:e2        {: RESULT =  e1 + "*" + e2;  dicionario.put(RESULT,new TabelaSimbolo(checkExpr(e1,e2),false)); :}  
+	        | expr:e1 DIVIDE expr:e2       {: RESULT =  e1 + "/" + e2;  dicionario.put(RESULT,new TabelaSimbolo(checkExpr(e1,e2),false)); :}  
+           | expr:e1 EQUALS expr:e2       {: RESULT =  e1 + "==" + e2; dicionario.put(RESULT,new TabelaSimbolo(checkExpr(e1,e2),false)); :}
            | expr:e1 GREATER expr:e2      {: RESULT =  e1 + ">" + e2;  dicionario.put(RESULT,new TabelaSimbolo(checkExpr(e1,e2),false)); :}
            | expr:e1 LESS expr:e2         {: RESULT =  e1 + "<" + e2;  dicionario.put(RESULT,new TabelaSimbolo(checkExpr(e1,e2),false)); :}
            | expr:e1 E expr:e2            {: RESULT =  e1 + "&&" + e2; dicionario.put(RESULT,new TabelaSimbolo(checkExpr(e1,e2),false)); :}

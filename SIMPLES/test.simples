@@ -1,70 +1,31 @@
-/* Exemplo de um programa escrito em SIMPLES */
+/* teste */
+procedimento inteiro fatorial(inteiro n)
+inicio
+   inteiro r;
+   se n < 0 entao
+      retorna 0;
+   fimse
+
+   se n = 0 ou n = 1 entao
+      retorna 1;
+   senao
+      r <- fatorial(n-1);
+      retorna n * r;
+   fimse
+fim
+
+
+procedimento vazio imprime(inteiro n)
+inicio
+   escreva n;
+fim
+
 
 programa
 inicio
-   inteiro a;
-   inteiro b <- 5;
-   inteiro c;
-   inteiro f;
-   inteiro i;
-   flutuante d;
-
-   inteiro teste[10+5];
-
-   teste[0] <- 5;
-
-   para i de 1 ate 15 passo 2 faca
-      leia teste[i];
-   fimpara 
-
-   leia a;
-   leia c;
-   leia f;
-   leia d;
-
-   b <- (a + b) * c div c;
-   f <- 5 + 2;
-   c <- c + f * 5;
-
-   escreva b;
-   escreva f;
-   escreva c;
-   escreva d;
-   escreval "testando";
-   escreva  "helloworld";
-   escreval a + b;
-
-   se b > f entao
-      escreva b;
-   senao 
-      escreva f;
-   fimse
-
-   se a = 5 entao
-      se b > 5 entao
-          se c < 10 entao
-              escreva a + b + c;
-          fimse
-      fimse
-   fimse
-
-   enquanto (b > f e a < 1000) ou a < f faca
-      escreva f * 10 ;
-      f <- f - 1 ;
-      enquanto(b = 10) faca
-         escreva b;
-         b <- b - 2;
-      fimenquanto
-    fimenquanto
-
-
-    para i de 1 ate 10 passo 2 faca
-      escreva i;
-    fimpara 
-
-    para i de 1 ate 10 passo -1 faca
-      escreva i;
-    fimpara 
-
+   inteiro numero;
+   inteiro resultado;
+   leia numero;
+   resultado <- fatorial(numero);
+   escreva resultado;
 fim
-
